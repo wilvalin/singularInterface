@@ -21,10 +21,13 @@ local F;
 			)
 			else ( 
 			
+			
+			R = ring I;
 			inputToSingular = "LIB \"gfanlib.so\"; \n" | 
 									"ring R = 0, (" | replace("[{}]", "", toString gens R) | "), dp; \n" |
 									"ideal I = " | replace("ideal", "", toString I ) | ";  \n" |
-									"tropicalVariety (I, number( " | o.Adic | ")); \n" ;
+									"fan TI = tropicalVariety (I, number( " | -*o.Adic*- 2 | ")); \n" |
+									"write(\":w <<FILENAME>> \",TI);";
 									
 			--inputToSingular = "LIB \"gfanlib.so\"; \n" | 
 			--						"ring R = 0, (" | replace("[{}]", "", toString gens R) | "), dp; \n" |
@@ -73,21 +76,23 @@ local F;
 );
 
 singularMakeTemporaryFile = (data) -> (
-	tmpName := temporaryFileName();
-	tmpFile := openOut tmpName;
+	
+
 	tmpFile << data << close;
 	tmpName
 )
 
-runSingularCommand = (cmd, data) -> (
-	
+runSingularCommand = (data) -> (
+	tmpName := temporaryFileName();
+	data = replace("<<FILENAME>>", tmpName | ".out", data);
+	tmpFile := openOut tmpName;
 	tmpFile := singularMakeTemporaryFile(data);
 	
 	-- in the future we want to make this check at the beginning when we install SingularInterface package
 	if run ("Singular -c 'quit;'") =!= 0 then 
 		error("You need to install Singular") 
 	else (
-	ex := "Singular" | " < " | tmpFile | " > " | tmpFile | ".out" | " 2> " | tmpFile | ".err";
+	ex := "Singular" | " < " | tmpFile | " 2> " | tmpFile | ".err";
 
 	returnvalue := run ex;
      	if(not returnvalue == 0) then
