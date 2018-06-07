@@ -21,25 +21,37 @@ local F;
 			)
 			else ( 
 			
-			output := runSingularCommand(tropicalVariety, data);
-			if(length(output#0)==0) then return "error: this variety is empty";
-			-- since Singular returns a file in the same format as gfan we use this method to read it;
-			-- this is a fan with miltiplicities for the max cones 
-			F = gfanParsePolyhedralFan output;  
-			
-			if (instance(F,String)) then return F; 
-			----T=tropicalCycle(F_0,F_1)); -- TODO replace with the correct constructor to get 
-			T = TropicalCycleFromPolyhedralComplex (PolyhedralComplexFromFan F);
+			inputToSingular = "LIB \"gfanlib.so\"; \n" | 
+									"ring R = 0, (" | replace("[{}]", "", toString gens R) | "), dp; \n" |
+									"ideal I = " | replace("ideal", "", toString I ) | ";  \n" |
+									"tropicalVariety (I, number( " | o.Adic | ")); \n" ;
+									
+			--inputToSingular = "LIB \"gfanlib.so\"; \n" | 
+			--						"ring R = 0, (" | replace("[{}]", "", toString gens R) | "), dp; \n" |
+			--						"ideal I = " | replace("ideal", "", toString I); | "\n" |
+			--						"fan TI = tropicalVariety (I, number( " | o.Adic | ")); \n" | 
+			--						"write(\":w filename.out\",TI);" | "\n";
 			
 			-- runSingular ... 
 			-- ok, call Singular
-			Singular FileName; 
+			--Singular FileName; 
 			--LIB "gfanlib.so";
 			--ring R = 0, (x, y, z), dp;
 			--ideal I = x^2+ x*y;
 			-- !!! has to be homogeneous
 			--fan TI = tropicalVariety (I, number(o.Adic));	
 			--write(":w filename.out",TI);			
+			
+			output := runSingularCommand(inputToSingular);
+			--output := runSingularCommand(tropicalVariety, data);
+			if(length(output#0)==0) then return "error: this variety is empty";
+			-- since Singular returns a file in the same format as gfan we use this method to read it;
+			-- this is a fan with miltiplicities for the max cones 
+			F = gfanParsePolyhedralFan output;  
+			
+			if (instance(F,String)) then return F; 
+			----T=tropicalCycle(F_0,F_1); -- TODO replace with the correct constructor to get 
+			T = TropicalCycleFromPolyhedralComplex (PolyhedralComplexFromFan F);	
 			);
 	)	
 	
@@ -75,7 +87,7 @@ runSingularCommand = (cmd, data) -> (
 	if run ("Singular -c 'quit;'") =!= 0 then 
 		error("You need to install Singular") 
 	else (
-	ex := "Singular" | cmd | " < " | tmpFile | " > " | tmpFile | ".out" | " 2> " | tmpFile | ".err";
+	ex := "Singular" | " < " | tmpFile | " > " | tmpFile | ".out" | " 2> " | tmpFile | ".err";
 
 	returnvalue := run ex;
      	if(not returnvalue == 0) then
