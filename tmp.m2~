@@ -1,0 +1,36 @@
+
+runSingularCommand = (data) -> (
+	tmpName := temporaryFileName();
+	data = replace("<<FILENAME>>", tmpName | ".out", data);
+	tmpFile := openOut tmpName;
+	tmpFile := singularMakeTemporaryFile(data);
+	
+	-- in the future we want to make this check at the beginning when we install SingularInterface package
+	if run ("Singular -c 'quit;'") =!= 0 then 
+		error("You need to install Singular") 
+	else (
+	ex := "Singular" | " < " | tmpFile | " 2> " | tmpFile | ".err";
+
+	returnvalue := run ex;
+     	if(false) then
+		(	
+	     << "Singular returned an error message.\n";
+	     << "COMMAND:" << ex << endl;
+	     << "INPUT:\n";
+	     << get(tmpFile);
+	     << "ERROR:\n";
+	     << get(tmpFile |".err");
+	     );
+		 
+		out := get(tmpFile | ".out");
+		print out;
+	-- TODO: check the following is done automatically when M2 is closed
+	--gfanRemoveTemporaryFile tmpFile;
+	--gfanRemoveTemporaryFile(tmpFile | ".out");
+	--gfanRemoveTemporaryFile(tmpFile | ".err");
+	--outputFileName := null;
+	
+	--if gfanKeepFiles then outputFileName = tmpFile|".out";
+	--(out, "GfanFileName" => outputFileName)
+	);	
+)
